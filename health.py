@@ -54,7 +54,6 @@ def get_data(soup, target):
         result.append(row.contents)
     final = [(term[0].replace(u'\xa0', u'')).replace(',', '')
              for term in result]
-# get rid of junk
     final = prune_list(final, "::")
     final = prune_list(final, "MEPS HC-155")
     final = prune_list(final, "MEPS HC-163")
@@ -349,13 +348,9 @@ def rmse(model, test_set, y_name, location_regressors):
 
 
 def wls_modeling(data, y_name, candidates_location, w_name, thealpha):
-    # temp=data.copy()
-    # print("made temp copy")
     candidates = get_variables("%s" % candidates_location)
     print("got candidates for regressors")
-# temp=trim(temp,y_name,candidates,w_name)
     print("trimmed dataset")
-# model=sm.WLS(temp[y_name],sm.add_constant(temp[candidates]),1./temp[w_name])
     model = sm.WLS(
         data[y_name],
         sm.add_constant(
@@ -383,8 +378,6 @@ def rf_modeling(data, y_name, candidates_location, n_trees, w_name):
     print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
     print("got candidates for regressors")
-# temp=rf_trim(temp,y_name,candidates)
-# print("trimmed dataset")
     model = RandomForestRegressor(
         n_estimators=n_trees,
         min_samples_split=2,
@@ -426,8 +419,6 @@ def gbr_modeling(data, y_name, candidates_location, n_trees, w_name):
     print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
     print("got candidates for regressors")
-# temp=rf_trim(temp,y_name,candidates)
-# print("trimmed dataset")
     model = GradientBoostingRegressor(n_estimators=n_trees, min_samples_split=2)
     print("assigned model")
     res = model.fit(
@@ -436,8 +427,6 @@ def gbr_modeling(data, y_name, candidates_location, n_trees, w_name):
         sample_weight=np.asarray(
             temp[w_name]))
     print("fit model")
-# joblib.dump(res,"./%srf_model%s.pkl"%(y_name,datetime.datetime.today()))
-# print("saved model")
     return res
 
 
@@ -447,8 +436,6 @@ def gb_modeling(data, y_name, candidates_location, n_trees, w_name):
     print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
     print("got candidates for regressors")
-# temp=rf_trim(temp,y_name,candidates)
-# print("trimmed dataset")
     model = GradientBoostingRegressor(n_estimators=n_trees, min_samples_split=1)
     print("assigned model")
     res = model.fit(
@@ -480,7 +467,6 @@ def br_modeling(data, y_name, candidates_location):
 
 
 def get_persons_and_insurance():
-    # meps_modeled=pd.read_pickle("./meps_bucketed.pkl")
     meps_modeled = pd.read_pickle(
         "./all_with_estimates_and_buckets_20150929.pkl")
     print("got meps")
@@ -519,10 +505,6 @@ def underscore_the_headers_in_pickled_files(location):
 def prep_for_modeling():
     all = pd.read_pickle("./this_is_the_set_i_built_the_models_on_.pkl")
     print("got data")
-# cats=get_variables("./categorical_regressors__.txt")
-# print("got categorical variables")
-# all=make_dummies(all,cats,"2013_with_dummies_.pkl")
-# print("made dummies")
     with open("./exog_rf_.txt", "r") as f:
         temp = f.read()
         exog = temp.splitlines()
@@ -554,11 +536,6 @@ def prep_for_modeling():
     print("popped w")
     insurance = pd.read_pickle("../data/insurance_current_.pkl")
     print("got insurance plans")
-# all_with_estimated_charges=pd.read_pickle("./meps_with_buckets.pkl")
-# all_with_estimated_charges=pd.read_pickle("./all_with_estimated_charges_underscored.pkl")
-# print("got all data with estimated costs and buckets")
-# return (all, train, test, validate, endog, office, outpatient,
-# inpatient, er, w, exog, insurance, all_with_estimated_charges)
     return (
         all,
         train,
@@ -629,29 +606,18 @@ def cv_modeling(estimator, data, y_name, candidates_location, n_trees, w_name):
     print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
     print("got candidates for regressors")
-# temp=rf_trim(temp,y_name,candidates)
-# print("trimmed dataset")
     model = estimator()
     print("assigned model")
     parameters = {}
     clf = GridSearchCV(model, parameters)
     res = clf.fit(temp[candidates], temp[y_name])
-# print("fit model")
-# joblib.dump(res,"./%sgb_model%s.pkl"%(y_name,datetime.datetime.today()))
-# print("saved model")
     return res
 
 
 def find_kernel(data):
     from sklearn.neighbors import KernelDensity
     freq = plt.hist(np.asarray(data), bins=len(data), normed=True)
-# np.random.seed(1)
-# X = freq[0][:,np.newaxis]
-# X_plot = np.linspace(-5, 10, len(X))[:, np.newaxis]
     fig, ax = plt.subplots()
-# kde = KernelDensity(kernel="gaussian", bandwidth=bw).fit(X)
-# log_dens = kde.score_samples(X_plot)
-# ax.plot(X_plot[:, 0], np.exp(log_dens), '-')
     max_y = max(freq[0])
     temp = [int(term > 0) for term in freq[0]]
     temp_rev = temp[::-1]
@@ -660,7 +626,6 @@ def find_kernel(data):
     ax.set_ylim((0, max_y))
     plt.show()
     return (freq, max_x, max_y)
-# return (kde, X, X_plot, log_dens)
 
 
 def breakout_insurance(thestring):
@@ -863,22 +828,6 @@ def estimate_billed_charges(data, kind):
     print("made copy of data")
     model = load_model(kind)
     print("loaded model")
-# model_outpatient=load_model("outpatient")
-# print("loaded model 2")
-# model_inpatient=load_model("inpatient")
-# print("loaded model 3")
-# model_er=load_model("er")
-# print("loaded model 4")
-# exog_office=get_variables("./exog_building_rf_office.txt")
-# print("loaded exog 1")
-# exog_outpatient=get_variables("./exog_building_rf_outpatient.txt")
-# print("loaded exog 2")
-# exog_inpatient=get_variables("./exog_building_rf_inpatient.txt")
-# print("loaded exog 3")
-# exog_er=get_variables("./exog_building_rf_er.txt")
-# print("loaded exog 4")
-# charges=[model_office.predict(temp[exog_office]), model_outpatient.predict(temp[exog_outpatient]), model_inpatient.predict(temp[exog_inpatient]), model_er.predict(temp[exog_er])]
-# return (charges)
     charge = model.predict(temp)
     return charge
 
@@ -908,9 +857,6 @@ def get_insurance_breakout_from_plan_id(planid):
 
 
 def estimate_oop_from_database(thedictionary, planone, plantwo):
-    # thestring=''.join('{}{}'.format(key,val) for (key,val) in thedictionary.items())
-    # print(thestring)
-    # # input()
     search_string = "select estimate_office_charges, office_visits, FINAL_PERSON_WEIGHT_2013 from mepsdb where "
     d = {}
     for (key, value) in thedictionary.items():
@@ -924,8 +870,6 @@ def estimate_oop_from_database(thedictionary, planone, plantwo):
         else:
             search_string = search_string + \
                 " and %s = %s" % (clean(key)[:64], value)
-# print(search_string)
-# # input()
     con = db.connect("localhost", "root", "bebelus", "mepsdb")
     with con:
         cursor = con.cursor()
@@ -947,14 +891,7 @@ def estimate_oop_from_database(thedictionary, planone, plantwo):
     print("estimated visits")
     for plan in plans:
         kinds = ["office"]
-# kinds=["office","outpatient","inpatient","er"]
         for kind in kinds:
-            #   breakout=plan[plan.index[16+kinds.index(kind)]]
-            #   print(breakout)
-            #   deductible=plan[plan.index[1]]
-            #   print(deductible)
-            #   max_oop=plan[plan.index[3]]
-            #   print(max_oop)
             (deductible, max_oop, copay_before, coinsurance_before, copay_after,
              coinsurance_after) = get_insurance_breakout_from_plan_id(plan)
             temp[
@@ -1009,12 +946,6 @@ def estimate_oop_from_database(thedictionary, planone, plantwo):
     plt.savefig(billed)
     plt.clf()
     plt.close()
-    #  return f
-    # with open("./app/templates/soumya.json","w") as f:
-    #  f.write("[")
-    #  for term in (np.asarray(temp["estimate_office_charges"]))[:-1]:
-    #   f.write("%d,"%term)
-    #  f.write("%d]\n"%(np.asarray(temp["estimate_office_charges"]))[-1])
     return (html_dict, billed_html)
 
 
@@ -1033,10 +964,6 @@ def compute_oop(
         cpv = total_charged/num_visits
     if num_visits < 0:
         raise ValueError("negative number of visits")
-# copay_before=breakout[0][0][1]
-# coinsurance_before=breakout[0][1][1]
-# copay_after=breakout[1][0][1]
-# coinsurance_after=breakout[1][1][1]
     paid_before = copay_before + coinsurance_before*(max(0, cpv-copay_before))
     oop_before = coinsurance_before*(max(0, cpv-copay_before))
     length_before = min(num_visits, deductible/(1+oop_before))
@@ -1048,82 +975,11 @@ def compute_oop(
     oop_after = coinsurance_after*max(0, cpv-copay_after)
     length_after = min(visits_after, (max_oop-deductible)/(1+oop_after))
     total_paid_after_deductible = paid_after*length_after
-# total_paid_after_deductible=(copay_after + coinsurance_after*max(0,cpv-copay_after))*((min(max(total_charged-deductible,0),max_oop-deductible))/(1+ coinsurance_after*max(0,cpv-copay_after)))
     print("total_charged = %f \n deductible=%f, \n maxoop=%f, \n visits=%f, \n cpv=%f, \n copay_before=%f, \n coinsurance_before=%f, \n copay_after=%f, \n coinsurance_after=%f, \n paid_before=%f, \n oop_before=%f, \n length_before=%f, \n total_paid_before_deductible=%f, \n charged_before=%f, \n charged_after=%f, \n visits_after=%f, \n paid_after=%f, \n oop_after=%f, \n length_after=%f, \n total_paid_after_deductible=%f" % (
         total_charged, deductible, max_oop, num_visits, cpv, copay_before, coinsurance_before, copay_after, coinsurance_after, paid_before, oop_before, length_before, total_paid_before_deductible, charged_before, charged_after, visits_after, paid_after, oop_after, length_after, total_paid_after_deductible))
-# return (int(total_paid_before_deductible) ,
-# int(total_paid_after_deductible),
-# min(max_oop,int(total_paid_before_deductible +
-# total_paid_after_deductible)))
     return min(
         max_oop, int(
             total_paid_before_deductible + total_paid_after_deductible))
-
-
-# def estimate_oop(data,thedictionary,planone, plantwo):
-# data=estimate_visits(data)
-# plans=[planone, plantwo]
-# oop_dict={}
-# print("estimated visits")
-# temp=cross_section(data,thedictionary)
-# for plan in plans:
-#  kinds=["office"]
-# kinds=["office","outpatient","inpatient","er"]
-#  for kind in kinds:
-#   breakout=plan[plan.index[16+kinds.index(kind)]]
-#   print(breakout)
-#   deductible=plan[plan.index[1]]
-#   print(deductible)
-#   max_oop=plan[plan.index[3]]
-#   print(max_oop)
-#   temp["oop_%s"%kind]=temp[["estimate_%s_charges"%kind,"%s_visits"%kind]].apply(lambda x: compute_oop(x[0],x[1],breakout,deductible,max_oop ),axis=1)
-#   f={}
-#   f["oop_%s"%kind]=plt.hist(np.asarray(temp["oop_%s"%kind]),bins=min(100,len(temp)),weights=np.asarray(temp["FINAL_PERSON_WEIGHT_2013"]),normed=True)
-#   plt.title("Estimated out of pocket expenses for %s-based services under plan %s"%(kind,plan[plan.index[0]]))
-#   plt.xlabel("Estimated out of pocket expenses on %s-based services"%kind)
-#   plt.ylabel("Probability")
-#   plt.xlim(min(np.asarray(temp["oop_%s"%kind])),max(np.asarray(temp["oop_%s"%kind])))
-#   plt.ylim(min(f["oop_%s"%kind][0]),max(f["oop_%s"%kind][0]))
-#   oop_dict[plan["Plan_ID_(standard_component)"]]="./static/images/histogram_of_oop_%s_under_%s.png"%(kind,plan["Plan_ID_(standard_component)"])
-#   plt.savefig(oop_dict[plan["Plan_ID_(standard_component)"]])
-#   plt.clf()
-#   plt.close()
-# f["%s_billed"%kind]=plt.hist(np.asarray(temp["estimate_%s_charges"%kind]),bins=min(500,len(temp)),weights=np.asarray(temp["FINAL_PERSON_WEIGHT_2013"]),normed=True)
-# plt.title("Estimated billed charges for %s-based services"%(kind))
-# plt.xlabel("Estimated billed charges for %s-based services"%kind)
-# plt.ylabel("Probability")
-# plt.xlim(min(np.asarray(temp["estimate_%s_charges"%kind])),max(np.asarray(temp["estimate_%s_charges"%kind])))
-# plt.ylim(min(f["%s_billed"%kind][0]),max(f["%s_billed"%kind][0]))
-# billed="./static/images/histogram_of_billed_charges_%s.png"%(kind)
-# plt.savefig(billed)
-# plt.clf()
-# plt.close()
-# #  return f
-# # with open("./app/templates/soumya.json","w") as f:
-# #  f.write("[")
-# #  for term in (np.asarray(temp["estimate_office_charges"]))[:-1]:
-# #   f.write("%d,"%term)
-# #  f.write("%d]\n"%(np.asarray(temp["estimate_office_charges"]))[-1])
-# return (oop_dict,billed)
-
-# def compute_oop(total_charged, num_visits, breakout, deductible, max_oop):
-# if num_visits==0:
-#  return 0
-# if num_visits>0:
-#  cpv=total_charged/num_visits
-# if num_visits<0:
-#  raise ValueError("negative number of visits")
-# copay_before=breakout[0][0][1]
-# coinsurance_before=breakout[0][1][1]
-# copay_after=breakout[1][0][1]
-# coinsurance_after=breakout[1][1][1]
-# total_paid_before_deductible=min(deductible,total_charged*coinsurance_before) + (min(deductible,total_charged)/cpv)*copay_before
-# total_paid_after_deductible=(max(0,min(max_oop-deductible,total_charged-deductible))/cpv)*copay_after + min(max_oop-deductible,(total_charged-deductible)*coinsurance_after)
-# total_paid_after_deductible=(copay_after + coinsurance_after*max(0,cpv-copay_after))*((min(max(total_charged-deductible,0),max_oop-deductible))/(1+ coinsurance_after*max(0,cpv-copay_after)))
-# print("total_charged = %f \n deductible=%f, \n maxoop=%f, \n visits=%f, \n cpv=%f, \n copay_before=%f, \n coinsurance_before=%f, \n copay_after=%f, \n coinsurance_after=%f, \n paid_before=%f, \n oop_before=%f, \n length_before=%f, \n total_paid_before_deductible=%f, \n charged_before=%f, \n charged_after=%f, \n visits_after=%f, \n paid_after=%f, \n oop_after=%f, \n length_after=%f, \n total_paid_after_deductible=%f"%(total_charged, deductible, max_oop, num_visits, cpv, copay_before, coinsurance_before, copay_after, coinsurance_after, paid_before, oop_before, length_before, total_paid_before_deductible, charged_before, charged_after, visits_after, paid_after, oop_after, length_after, total_paid_after_deductible))
-# return (int(total_paid_before_deductible) , int(total_paid_after_deductible), min(max_oop,int(total_paid_before_deductible + total_paid_after_deductible)))
-# return min(max_oop,int(total_paid_before_deductible +
-# total_paid_after_deductible))
 
 
 def clean(thestring):
@@ -1209,53 +1065,4 @@ def unpack_visits(coded):
         pass
 
 
-# def join_copay_coinsurance(thelist):
-# result=[]
-# for term in thelist[:-1]:
-#  result.append("%s and "%annotate(term))
-#  if "$" in term:
-#   result.append("%s copay "%term)
-#  if "%" in term:
-#   result.append("%s coinsurance "%term)
-# result.append(annotate(thelist[-1]))
-# final=''.join(tuple(result))
-# return final
 
-
-# def split_on_deductible(thestring):
-# thestring=thestring.lower()
-# if "before" in thestring and "after" in thestring:
-#  return list(map(extract_copay_coinsurance,thestring.split("and")))
-# if "after" in thestring:
-#  if "copay" in thestring and "coinsurance" in the string:
-#   return list(map(extract_copay_coinsurance,("100% coinsurance",thestrin
-#  if "copay" in thestring and not ("coinsurance" in the string):
-#   return list(map(extract_copay_coinsurance,(thestring,"100% coinsurance")))
-#  if not ("copay" in thestring) and ("coinsurance" in the string):
-#   return list(map(extract_copay_coinsurance,("$0 copay",thestring)))
-
-#  return list(map(extract_copay_coinsurance,("100% coinsurance",thestring)))
-# else:
-#  if "copay" in thestring and "coinsurance" in the string:
-#   return list(map(extract_copay_coinsurance,(thestringsplit.("and"))))
-#  if "copay" in thestring and not ("coinsurance" in the string):
-#   return list(map(extract_copay_coinsurance,(thestring,"100% coinsurance")))
-#  if not ("copay" in thestring) and ("coinsurance" in the string):
-#   return list(map(extract_copay_coinsurance,("$0 copay",thestring)))
-
-
-# def extract_copay_coinsurance(thestring):
-# thestring=thestring.lower()
-# if "copay" in thestring and "coinsurance" in thestring:
-#  return list(map(extract_parameter,thestring.split("and")))
-# if "copay" in thestring:
-#  return list(map(extract_parameter,(thestring,"0% coinsurance")))
-# if "coinsurance" in thestring:
-#  return list(map(extract_parameter,("$0 copay",thestring)))
-# if "$" in thestring and "%" in thestring:
-#  return extract_copay_coinsurance(join_copay_coinsurance(list(thestring.split("and"))))
-# if "$" in thestring and not ("%" in thestring):
-#  return extract_copay_coinsurance("%s copay"%thestring)
-# if "%" in thestring and not ("$" in thestring):
-#  return extract_copay_coinsurance("%s coinsurance"%thestring)
-#  return list(map(extract_parameter,("copay $0",thestring)))
