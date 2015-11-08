@@ -90,7 +90,6 @@ def get_data(soup, target):
             f.write("%s," % final[skip])
             f.write("%s," % final[skip+1])
             f.write("%s\n" % ((final[skip+2]).lstrip()).rstrip())
-    print("Done")
     temp = pd.read_csv(target)
     temp = temp.sort("start").copy()
     temp.index = list(range(len(temp)))
@@ -145,7 +144,6 @@ def write_table(data, header, target, short="No"):
         with open(target, "a") as f:
             writer = csv.writer(f)
             writer.writerow(u)
-        print("Done with row %s" % data.index(row))
 
 
 def swap_columns(theframe, here, there):
@@ -163,35 +161,20 @@ def clean_columns(theframe):
 
 def construct_dataset():
     cons = pd.read_csv("./consolidated_frame.csv")
-    print("Read data")
     cons = clean_columns(cons)
-    print("cleaned columns")
     office = cons["TOTAL OFFICE-BASED EXP 12"]
-    print("office")
     outpatient = cons["TOTAL OUTPATIENT PROVIDER EXP 12"]
-    print("outpatient")
     weight = cons["FINAL PERSON WEIGHT 2012"]
-    print("weight")
     er = cons["TOTAL ER FACILITY + DR EXP 12"]
-    print("er")
     inpatient = cons["TOT HOSP IP FACILITY + DR EXP 12"]
-    print("inpatient")
     age = cons["AGE AS OF 12/31/12 (EDITED/IMPUTED)"]
-    print("age")
     sex = cons["SEX"]
-    print("sex")
     blood_pressure = cons["HIGH BLOOD PRESSURE DIAG (>17)"]
-    print("blood_pressure")
     income = cons["FAMILY'S TOTAL INCOME"]
-    print("income")
     married = cons["MARITAL STATUS-12/31/12 (EDITED/IMPUTED)"]
-    print("married")
     drug = cons["TOTAL RX-EXP 12"]
-    print("drug")
     region = cons["CENSUS REGION AS OF 12/31/12"]
-    print("region")
     weight = cons["FINAL PERSON WEIGHT 2012"]
-    print("weight")
     design_variables = [
         x.name for x in [
             married,
@@ -206,44 +189,26 @@ def construct_dataset():
             region,
             drug,
          weight]]
-    print("design_variables")
     design_matrix = cons[design_variables]
-    print("design_matrix")
     X = design_matrix[design_matrix["FAMILY\'S TOTAL INCOME"] > 0]
-    print("constructed X")
     X = X[X["AGE AS OF 12/31/12 (EDITED/IMPUTED)"] >= 0]
-    print("cleaning age")
     X = X[X["HIGH BLOOD PRESSURE DIAG (>17)"] >= -1]
-    print("cleaning hyp")
     X = X[X["MARITAL STATUS-12/31/12 (EDITED/IMPUTED)"] < 6]
-    print("cleaning marital")
     X = X[X["CENSUS REGION AS OF 12/31/12"] > 0]
-    print(" region")
     X = X[X["FINAL PERSON WEIGHT 2012"] > 0]
-    print("cleaning weight")
     X["northeast"] = (X["CENSUS REGION AS OF 12/31/12"] == 1).astype(int)
-    print("northeast")
     X["midwest"] = (X["CENSUS REGION AS OF 12/31/12"] == 2).astype(int)
-    print("midwest")
     X["south"] = (X["CENSUS REGION AS OF 12/31/12"] == 3).astype(int)
-    print("south")
     X["hypertension"] = (X["HIGH BLOOD PRESSURE DIAG (>17)"] == 1).astype(int)
-    print("hypertension")
     X["male"] = (X["SEX"] == 1).astype(int)
-    print("male")
     X["no longer married"] = (
         X["MARITAL STATUS-12/31/12 (EDITED/IMPUTED)"].map(lambda x: x in [2, 3, 4])).astype(int)
-    print("no longer married")
     X["married"] = (
         X["MARITAL STATUS-12/31/12 (EDITED/IMPUTED)"].map(lambda x: x == 1)).astype(int)
-    print("married")
     X["input weight"] = 1/X["FINAL PERSON WEIGHT 2012"]
     input_weights = X["input weight"]
-    print("input weight")
     X.index = list(range(len(X)))
-    print("reindexed X")
     X = split_dataset(X)
-    print("annotate train, test, validate")
     exog_variables = [
         "married",
         "no longer married",
@@ -254,13 +219,11 @@ def construct_dataset():
         "northeast",
         "midwest",
      "south"]
-    print("assigned exog variables")
     endog_labels = {
         "office": ["TOTAL OFFICE-BASED EXP 12"],
         "outpatient": ["TOTAL OUTPATIENT PROVIDER EXP 12"],
         "inpatient": ["TOT HOSP IP FACILITY + DR EXP 12"],
      "er": ["TOTAL ER FACILITY + DR EXP 12"]}
-    print("assigned endog labels")
     final = {}
     final["data"] = X
     final["exog_variables"] = exog_variables
@@ -349,18 +312,13 @@ def rmse(model, test_set, y_name, location_regressors):
 
 def wls_modeling(data, y_name, candidates_location, w_name, thealpha):
     candidates = get_variables("%s" % candidates_location)
-    print("got candidates for regressors")
-    print("trimmed dataset")
     model = sm.WLS(
         data[y_name],
         sm.add_constant(
             data[candidates]),
          1./data[w_name])
-    print("assigned model")
     res = model.fit_regularized(alpha=thealpha)
-    print("fit model")
     res.save("./%swls_model%s.pkl" % (y_name, datetime.datetime.today()))
-    print("saved model")
     return res
 
 
@@ -375,21 +333,16 @@ def rf_trim(data, dependent_name, regressors_names):
 def rf_modeling(data, y_name, candidates_location, n_trees, w_name):
     from sklearn.ensemble import RandomForestRegressor
     temp = data.copy()
-    print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
-    print("got candidates for regressors")
     model = RandomForestRegressor(
         n_estimators=n_trees,
         min_samples_split=2,
      oob_score=True)
-    print("assigned model")
     res = model.fit(
         temp[candidates],
         temp[y_name],
         sample_weight=np.asarray(
             temp[w_name]))
-    print("fit model")
-    print("saved model")
     importance = sorted([(res.feature_importances_[place],
                           candidates[place]) for place in range(
                              len(candidates))])
@@ -397,14 +350,12 @@ def rf_modeling(data, y_name, candidates_location, n_trees, w_name):
     with open(candidates_location, "w") as f:
         for term in importance:
             f.write("%s\n" % term[1])
-    print("made importance list")
     return (res)
 
 
 def pickle_model(themodel, location):
     from sklearn.externals import joblib
     joblib.dump(themodel, location)
-    print("saved model")
 
 
 def load_model(kind):
@@ -416,64 +367,46 @@ def load_model(kind):
 def gbr_modeling(data, y_name, candidates_location, n_trees, w_name):
     from sklearn.ensemble import GradientBoostingRegressor
     temp = data.copy()
-    print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
-    print("got candidates for regressors")
     model = GradientBoostingRegressor(n_estimators=n_trees, min_samples_split=2)
-    print("assigned model")
     res = model.fit(
         temp[candidates],
         temp[y_name],
         sample_weight=np.asarray(
             temp[w_name]))
-    print("fit model")
     return res
 
 
 def gb_modeling(data, y_name, candidates_location, n_trees, w_name):
     from sklearn.ensemble import GradientBoostingRegressor
     temp = data.copy()
-    print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
-    print("got candidates for regressors")
     model = GradientBoostingRegressor(n_estimators=n_trees, min_samples_split=1)
-    print("assigned model")
     res = model.fit(
         temp[candidates],
         temp[y_name],
         sample_weight=np.asarray(
             temp[w_name]))
-    print("fit model")
     joblib.dump(res, "./%sgb_model%s.pkl" % (y_name, datetime.datetime.today()))
-    print("saved model")
     return res
 
 
 def br_modeling(data, y_name, candidates_location):
     from sklearn.linear_model import BayesianRidge
     temp = data.copy()
-    print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
-    print("got candidates for regressors")
     temp = rf_trim(temp, y_name, candidates)
-    print("trimmed dataset")
     model = BayesianRidge()
-    print("assigned model")
     res = model.fit(temp[candidates], temp[y_name])
-    print("fit model")
     joblib.dump(res, "./%sbr_model%s.pkl" % (y_name, datetime.datetime.today()))
-    print("saved model")
     return res
 
 
 def get_persons_and_insurance():
     meps_modeled = pd.read_pickle(
         "./all_with_estimates_and_buckets_20150929.pkl")
-    print("got meps")
     insurance = pd.read_pickle("../data/insurance_current_.pkl")
-    print("got insurance")
     exog = get_all_regressors()
-    print("got exog")
     return (meps_modeled, exog, insurance)
 
 
@@ -499,43 +432,28 @@ def underscore_the_headers_in_pickled_files(location):
     data = pd.read_pickle(location)
     data = underscore_the_headers(data)
     data.to_pickle("%s" % (location.replace(".pkl", "_.pkl")))
-    print("done")
 
 
 def prep_for_modeling():
     all = pd.read_pickle("./this_is_the_set_i_built_the_models_on_.pkl")
-    print("got data")
     with open("./exog_rf_.txt", "r") as f:
         temp = f.read()
         exog = temp.splitlines()
-    print("got exog")
     all = bucketize(all, exog)
-    print("bucketized all regressors in all")
     with open("./exog_rf__.txt", "r") as f:
         temp = f.read()
         exog = temp.splitlines()
     train = all[all["train"] == 1]
-    print("made training set")
     test = all[all["test"] == 1]
-    print("made test set")
     validate = all[all["validate"] == 1]
-    print("made set")
     endog = get_variables("./expenses13_.txt")
-    print("got endog")
     office = endog[0]
-    print("assigned office")
     outpatient = endog[1]
-    print("assigned outpatient")
     er = endog[2]
-    print("assigned er")
     inpatient = endog[3]
-    print("assigned inpatient")
     w = get_variables("weights13_.txt")
-    print("assigned w")
     w = w[0]
-    print("popped w")
     insurance = pd.read_pickle("../data/insurance_current_.pkl")
-    print("got insurance plans")
     return (
         all,
         train,
@@ -603,11 +521,8 @@ def cv_modeling(estimator, data, y_name, candidates_location, n_trees, w_name):
     from sklearn.ensemble import estimator
     from sklearn.grid_search import GridSearchCV
     temp = data.copy()
-    print("made temp copy")
     candidates = get_variables("./%s" % candidates_location)
-    print("got candidates for regressors")
     model = estimator()
-    print("assigned model")
     parameters = {}
     clf = GridSearchCV(model, parameters)
     res = clf.fit(temp[candidates], temp[y_name])
@@ -825,9 +740,7 @@ def add_estimated_charges_columns(data):
 def estimate_billed_charges(data, kind):
     exog = get_variables("./exog_building_rf_%s__.txt" % kind)
     temp = data[exog]
-    print("made copy of data")
     model = load_model(kind)
-    print("loaded model")
     charge = model.predict(temp)
     return charge
 
@@ -888,7 +801,6 @@ def estimate_oop_from_database(thedictionary, planone, plantwo):
     plans = [planone, plantwo]
     oop_dict = {}
     html_dict = {}
-    print("estimated visits")
     for plan in plans:
         kinds = ["office"]
         for kind in kinds:
@@ -1033,7 +945,6 @@ def cross_section(thedata, thedictionary):
     for key in thedictionary.keys():
         if thedictionary[key] != '':
             temp = temp[temp["%s" % key] == (int(thedictionary[key]))]
-            print(len(temp))
     if len(temp) > 0:
         return temp
     else:
