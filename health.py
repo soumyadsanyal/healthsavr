@@ -17,6 +17,7 @@ matplotlib.use('Agg')
 
 
 def theurl(name):
+'''dictionary mapping of subject tables to urls'''
     answer = {
         "2012": "http://meps.ahrq.gov/mepsweb/data_stats/download_data_files_codebook.jsp?PUFId=H155",
         "2013": "http://meps.ahrq.gov/mepsweb/data_stats/download_data_files_codebook.jsp?PUFId=H163",
@@ -30,16 +31,19 @@ def theurl(name):
 
 
 def make_soup(url):
+'''returns parse tree for the url content'''
     response = requests.get(url)
     soup = BeautifulSoup(response.content)
     return soup
 
 
 def get_header(name, target):
+'''returns column dictionary as scraped from html page for ascii flat file, deprecated'''
     return get_data(make_soup(theurl(name)), target)
 
 
 def get_variables(target):
+'''returns variables as list from text file'''
     with open(target, "r") as f:
         vars = f.read()
     vars = vars.splitlines()
@@ -49,6 +53,7 @@ def get_variables(target):
 
 
 def get_data(soup, target):
+'''helper function, returning column dictionary for ascii flat files by scraping html on meps/ahrq'''
     result = []
     for row in soup.find_all("font"):
         result.append(row.contents)
@@ -97,6 +102,7 @@ def get_data(soup, target):
 
 
 def prune_list(thelist, theterm):
+''' helper function to get rid of crud in parse tree'''
     while True:
         try:
             thelist.pop(thelist.index(theterm))
@@ -106,6 +112,7 @@ def prune_list(thelist, theterm):
 
 
 def pull_ascii_data(source):
+'''read in ascii file, return rows'''
     with open(source, 'r') as f:
         result = f.read()
     return result.split('\n')
@@ -127,6 +134,7 @@ def all_together_now(datafile, headerfile):
 
 
 def write_table(data, header, target, short="No"):
+'''write data with header to target in comma separated value format. option short writes only first 10 rows'''
     if short != "No":
         data = data[:10]
     data = prune_list(data, '')
@@ -147,6 +155,7 @@ def write_table(data, header, target, short="No"):
 
 
 def swap_columns(theframe, here, there):
+'''swaps columns here and there in dataframe theframe'''
     temp = theframe[here].copy()
     theframe[here] = theframe[there].copy()
     theframe[there] = temp.copy()
@@ -154,6 +163,7 @@ def swap_columns(theframe, here, there):
 
 
 def clean_columns(theframe):
+'''cleans whitespace from left and right in entries in columns of dataframe theframe'''
     temp = theframe.columns.map(lambda x: (((str(x).lstrip()).rstrip()))).copy()
     theframe.columns = temp.copy()
     return theframe
@@ -265,10 +275,6 @@ def trim(data, dependent_name, regressors_names, weight_name):
     for variable in regressors_names:
         temp = temp[temp[variable] >= 0]
     return temp
-
-
-def compute_oop(pars, person):
-    return np.dot(pars, person)
 
 
 def process(person=[1, 1, 0, 90000, 1, 1, 55, 0, 0, 1]):
